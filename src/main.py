@@ -22,12 +22,18 @@ def check_date(date):
         raise ValidDate
 
 
-def isAlreadyUsed(username):
+def isAlreadyUsed(username):  # O(N) where N is number of users in the system
     path = os.path.join(os.getcwd(), 'username.txt')
-    with open(path, 'r') as file:
-        lines = file.readlines()
-    users = [line.strip() for line in lines]
-    return username in users
+    try:
+        with open(path, 'r') as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        with open(path, 'w') as file:
+            file.write('')
+        return False
+    else:
+        users = [line.strip() for line in lines]
+        return username in users
 
 
 def openApp(username):
@@ -50,18 +56,25 @@ def openApp(username):
         else:
             # path to file containing user's history
             history_path = os.path.join(
-                os.getcwd(), f'user-history/{username}.txt')
+                os.getcwd(), f'user-data/{username}/history.txt')
 
-            # Handle options in user input
+            balance_path = os.path.join(
+                os.getcwd(), f'user-data/{username}/balance.txt')
+
+            # Handle balance
             option_income = input(
                 'Do you want to enter income or expense? (i/e): ')
 
             if option_income == 'e':
                 amount = amount * -1
 
-            with open(history_path, 'r') as file:
-                total = int(file.readline)
+            with open(balance_path, 'r') as file:
+                balance = int(file.read())
+                balance += amount
+                with open(balance_path, 'w') as file:
+                    file.write(str(balance))
 
+            # Hance date and time
             parsed_time = datetime.strptime(time, "%d/%m/%Y")
             formatted_time = parsed_time.strftime("%d/%m/%Y")
 
@@ -72,6 +85,9 @@ def openApp(username):
             option_exit = input('Do you want to continue? (y/n): ')
             if option_exit == 'n':
                 exit = True
+                with open(balance_path, 'r') as file:
+                    balance = int(file.read())
+                    print(f'Balance: {balance}')
                 print('Goodbye!')
 
 
@@ -83,14 +99,22 @@ if __name__ == '__main__':
         if option == 'y':
             username_path = os.path.join(os.getcwd(), 'username.txt')
 
-            history_path = os.path.join(
-                os.getcwd(), f'user-history/{username}.txt')
+            new_directory = os.path.join(os.getcwd(), f'user-data/{username}')
+
+            if not os.path.exists(new_directory):
+                os.makedirs(new_directory)
+
+            history_path = os.path.join(new_directory, 'history.txt')
+            balance_path = os.path.join(new_directory, 'balance.txt')
 
             with open(username_path, 'a') as file:
                 file.write(username + '\n')
 
             with open(history_path, 'w') as file:
-                file.write('0\n')
+                file.write('')
+
+            with open(balance_path, 'w') as file:
+                file.write('0')
 
             openApp(username)
     else:
